@@ -5,24 +5,24 @@ import { Container, Wrapper } from './styles';
 import Timer from './Timer';
 import Controls from './Controls';
 import Laps from './Laps';
+import { formatTime } from './helpers';
 
 const TIME_INTERVAL = 10;
 
 function StopWatch({ startTime = 0 }) {
-  const [time, setTime] = useState(startTime);
   const [isActive, setIsActive] = useState(false);
-  const [lap, setLap] = useState(0);
   const [laps, setLaps] = useState([]);
   const timeIntervalRef = useRef();
+  const displayTimeRef = useRef();
+  const lapTimeRef = useRef(0);
+  const timeRef = useRef(startTime);
 
   useEffect(() => {
     if (isActive) {
       timeIntervalRef.current = setInterval(() => {
-        setTime((value) => {
-          console.log('>>>>> entre`', value);
-          return value + TIME_INTERVAL
-        });
-        setLap((value) => value + TIME_INTERVAL)
+        timeRef.current = timeRef.current + 10;
+        lapTimeRef.current = lapTimeRef.current + 10;
+        displayTimeRef.current.textContent = formatTime(timeRef.current)
       }, TIME_INTERVAL);
     } else {
       clearInterval(timeIntervalRef.current);
@@ -33,11 +33,14 @@ function StopWatch({ startTime = 0 }) {
     }
   }, [isActive]);
 
+  useEffect(() => {
+    lapTimeRef.current = 0;
+  }, [laps])
+
 
   const handleStartPause = (shouldPause = true) => {
     if (isActive) {
-      setLaps((value) => [lap, ...value]);
-      setLap(0);
+      setLaps((value) => [lapTimeRef.current, ...value]);
     }
 
     if (shouldPause) {
@@ -46,18 +49,17 @@ function StopWatch({ startTime = 0 }) {
   };
 
   const handleReset = useCallback(() => {
-    setTime(0);
+    timeRef.current = 0;
     setLaps([])
   }, []);
 
-  console.log('>>> time', time);
   return (
     <Container>
       <Wrapper>
-        <Timer time={time} />
+        <Timer innerRef={displayTimeRef} time={timeRef.current} />
         <Controls
           isActive={isActive}
-          isPaused={!isActive && !!time}
+          isPaused={!isActive && !!timeRef.current}
           onStartPause={handleStartPause}
           onReset={handleReset}
         />
